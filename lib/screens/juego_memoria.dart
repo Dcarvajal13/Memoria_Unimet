@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import '../models/carta_model.dart'; // Importamos el modelo que acabas de crear
+import '../models/carta_model.dart';
 
 class JuegoMemoria extends StatefulWidget {
   const JuegoMemoria({super.key});
@@ -10,10 +10,13 @@ class JuegoMemoria extends StatefulWidget {
 }
 
 class _JuegoMemoriaState extends State<JuegoMemoria> {
+  // 1. Baraja de cartas
   List<Carta> cartas = [];
-  List<int> cartasVolteadasIndex = [];
-  bool bloqueado = false;
   
+  // 2. Variables de control
+  List<int> cartasVolteadasIndex = []; 
+  bool bloqueado = false; 
+
   @override
   void initState() {
     super.initState();
@@ -21,31 +24,28 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
   }
 
   void _inicializarJuego() {
-    // Banco de imágenes (puedes tener más de 18, no importa)
-    List<String> bancoDeItems = [
-      '🐶', '🐱', '🐭', '🐹', '🐰', '🦊', 
-      '🐻', '🐼', '🐨', '🐯', '🦁', '🐮',
-      '🐷', '🐸', '🐵', '🐔', '🐧', '🐦',
-      '🦄', '🐙', '🦋' // Aunque sobren, el código de abajo lo arregla
+    List<String> emojis = [
+      '🦁', '🦁', '🐶', '🐶', '🐱', '🐱',
+      '🐭', '🐭', '🐹', '🐹', '🐰', '🐰',
+      '🦊', '🦊', '🐻', '🐻', '🐼', '🐼',
+      '🐨', '🐨', '🐯', '🐯', '🦄', '🦄',
+      '🐸', '🐸', '🐙', '🐙', '🦋', '🦋',
+      '🐢', '🐢', '🐬', '🐬', '🐡', '🐡',
     ];
     
-    // VALIDACIÓN IMPORTANTE: 
-    // Tomamos exactamente los primeros 18 items para llenar los 36 espacios (18 * 2)
-    List<String> itemsJuego = bancoDeItems.take(18).toList(); 
+    // Solo tomamos 18 pares (36 cartas)
+    emojis.shuffle();
+    List<String> itemsJuego = emojis.sublist(0, 36); 
     
-    // Creamos las parejas
-    List<String> tablero = [...itemsJuego, ...itemsJuego];
-    
-    // Mezclamos
-    tablero.shuffle();
+    setState(() {
 
-    // Generamos las cartas
-    cartas = List.generate(36, (index) {
-      return Carta(id: index, contenido: tablero[index]);
+      cartas = List.generate(36, (index) {
+      return Carta(id: index, contenido: itemsJuego[index]);
+    });
     });
   }
+
   void _onCartaTap(int index) {
-    // PROTECCIÓN: Si está bloqueado, ya está volteada o ya se encontró, no hacemos nada
     if (bloqueado || cartas[index].estaVolteada || cartas[index].encontrada) {
       return;
     }
@@ -55,9 +55,8 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
       cartasVolteadasIndex.add(index);
     });
 
-    // Si ya volteamos 2 cartas, verificamos si son iguales
     if (cartasVolteadasIndex.length == 2) {
-      bloqueado = true; // Bloqueamos la pantalla para que no toquen una 3ra carta
+      bloqueado = true; 
       _verificarPareja();
     }
   }
@@ -67,24 +66,18 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
     int index2 = cartasVolteadasIndex[1];
 
     if (cartas[index1].contenido == cartas[index2].contenido) {
-      // ¡MATCH! Son iguales 🎉
       setState(() {
         cartas[index1].encontrada = true;
         cartas[index2].encontrada = true;
-        
-        // Reseteamos para el siguiente turno
         bloqueado = false;
         cartasVolteadasIndex.clear();
       });
+      _verificarVictoria(); 
     } else {
-      // FALLO: No son iguales ❌
-      // Esperamos 1 segundo (1000 ms) para que el usuario vea qué cartas eran
       Timer(const Duration(milliseconds: 1000), () {
         setState(() {
           cartas[index1].estaVolteada = false;
           cartas[index2].estaVolteada = false;
-          
-          // Reseteamos
           bloqueado = false;
           cartasVolteadasIndex.clear();
         });
@@ -92,48 +85,111 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
     }
   }
 
-  @override
+  void _verificarVictoria() {
+    bool ganaste = cartas.every((carta) => carta.encontrada);
+    if (ganaste) {
+      showDialog(
+        context: context,
+        builder: (context) => AlertDialog(
+          title: const Text("¡Felicidades! 🎉"),
+          content: const Text("Has encontrado todas las parejas."),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop(); 
+                _reiniciarJuego(); 
+              },
+              child: const Text("Jugar de nuevo"),
+            ),
+          ],
+        ),
+      );
+    }
+  }
+
+  void _reiniciarJuego() {
+    setState(() {
+      _inicializarJuego(); 
+      bloqueado = false;
+      cartasVolteadasIndex.clear();
+    });
+  }
+
+ @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: AppBar(title: const Text('Memoria UNIMET'), backgroundColor: Colors.blue),
-      body: Padding(
-        padding: const EdgeInsets.all(8.0),
-        child: GridView.builder(
-
-          gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-            crossAxisCount: 6, // 6 columnas obligatorias
-            crossAxisSpacing: 10,
-            mainAxisSpacing: 10,
+      appBar: AppBar(
+        title: const Text(
+          'Memoria UNIMET',
+          style: TextStyle(fontWeight: FontWeight.bold),
+        ),
+        backgroundColor: Colors.brown[900], 
+        foregroundColor: Colors.white,
+        actions: [
+          IconButton(
+            icon: const Icon(Icons.refresh),
+            onPressed: _reiniciarJuego,
           ),
-          itemCount: cartas.length,
-          itemBuilder: (context, index) {
-          return GestureDetector(
-            onTap: () {
-              // SOLO deja esta línea. Borra el setState que tenías abajo.
-              _onCartaTap(index); 
-            },
+        ],
+      ),
+      // USAMOS UN STACK PARA LAS CAPAS
+      body: Stack(
+        children: [
+          // CAPA 1: EL FONDO (Siempre ocupa toda la pantalla)
+          Positioned.fill(
             child: Container(
-              decoration: BoxDecoration(
-                // CORRECCIÓN: Agregamos "|| cartas[index].encontrada" para que las parejas se queden visibles
-                color: cartas[index].estaVolteada || cartas[index].encontrada 
-                    ? Colors.white 
-                    : Colors.blue,
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.black),
-              ),
-              child: Center(
-                // CORRECCIÓN: Lo mismo aquí para mostrar el emoji si ya la encontraste
-                child: Text(
-                  cartas[index].estaVolteada || cartas[index].encontrada 
-                      ? cartas[index].contenido 
-                      : '', // Si está tapada, no muestra nada
-                  style: const TextStyle(fontSize: 24),
-                  ),
+              decoration: const BoxDecoration(
+                image: DecorationImage(
+                  // Usamos tu imagen exacta
+                  image: AssetImage('assets/fondomicro.png'),
+                  fit: BoxFit.cover, // Estira la imagen para cubrir todo sin deformar
                 ),
               ),
-            );
-          },
-        ),
+            ),
+          ),
+          
+          // CAPA 2: EL JUEGO (Centrado encima del fondo)
+          Center(
+            child: Container(
+              constraints: const BoxConstraints(maxWidth: 800),
+              child: Padding(
+                padding: const EdgeInsets.all(20.0),
+                child: GridView.builder(
+                  shrinkWrap: true,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 6,
+                    crossAxisSpacing: 15,
+                    mainAxisSpacing: 15,
+                    childAspectRatio: 1.0,
+                  ),
+                  itemCount: cartas.length,
+                  itemBuilder: (context, index) {
+                    return GestureDetector(
+                      onTap: () => _onCartaTap(index),
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: cartas[index].estaVolteada || cartas[index].encontrada
+                              ? Colors.white
+                              : Colors.brown[200], 
+                          borderRadius: BorderRadius.circular(8),
+                          border: Border.all(color: Colors.black),
+                        ),
+                        child: Center(
+                          child: Text(
+                            cartas[index].estaVolteada || cartas[index].encontrada
+                                ? cartas[index].contenido
+                                : '',
+                            style: const TextStyle(fontSize: 24),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
