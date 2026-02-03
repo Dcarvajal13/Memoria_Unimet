@@ -16,6 +16,7 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
   // 2. Variables de control
   List<int> cartasVolteadasIndex = []; 
   bool bloqueado = false; 
+  int intentos = 0;
 
   @override
   void initState() {
@@ -56,7 +57,10 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
     });
 
     if (cartasVolteadasIndex.length == 2) {
-      bloqueado = true; 
+      bloqueado = true;
+        setState(() {
+          intentos += 1;
+        });
       _verificarPareja();
     }
   }
@@ -112,10 +116,11 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
       _inicializarJuego(); 
       bloqueado = false;
       cartasVolteadasIndex.clear();
+      intentos = 0;
     });
   }
 
- @override
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
@@ -154,37 +159,75 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
               constraints: const BoxConstraints(maxWidth: 800),
               child: Padding(
                 padding: const EdgeInsets.all(20.0),
-                child: GridView.builder(
-                  shrinkWrap: true,
-                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                    crossAxisCount: 6,
-                    crossAxisSpacing: 15,
-                    mainAxisSpacing: 15,
-                    childAspectRatio: 1.0,
-                  ),
-                  itemCount: cartas.length,
-                  itemBuilder: (context, index) {
-                    return GestureDetector(
-                      onTap: () => _onCartaTap(index),
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: cartas[index].estaVolteada || cartas[index].encontrada
-                              ? Colors.white
-                              : Colors.brown[200], 
-                          borderRadius: BorderRadius.circular(8),
-                          border: Border.all(color: Colors.black),
-                        ),
-                        child: Center(
-                          child: Text(
-                            cartas[index].estaVolteada || cartas[index].encontrada
-                                ? cartas[index].contenido
-                                : '',
-                            style: const TextStyle(fontSize: 24),
-                          ),
+                child: Column( // <--- NUEVO: Column para poner texto arriba y cartas abajo
+                  mainAxisSize: MainAxisSize.min, // Para que se ajuste al contenido
+                  children: [
+                    // --- MARCADOR DE INTENTOS ---
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withValues(alpha: 0.8), // Fondo semitransparente
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        'Intentos: $intentos',
+                        style: const TextStyle(
+                          fontSize: 24, 
+                          fontWeight: FontWeight.bold,
+                          color: Colors.black87
                         ),
                       ),
-                    );
-                  },
+                    ),
+                    
+                    const SizedBox(height: 20), // Espacio entre texto y cartas
+
+                    // --- GRILLA DE CARTAS ---
+                    Flexible( // Flexible es necesario dentro de Column
+                      child: GridView.builder(
+                        shrinkWrap: true,
+                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: 6,
+                          crossAxisSpacing: 15,
+                          mainAxisSpacing: 15,
+                          childAspectRatio: 1.0,
+                        ),
+                        itemCount: cartas.length,
+                        itemBuilder: (context, index) {
+                          return GestureDetector(
+                            onTap: () => _onCartaTap(index),
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: cartas[index].estaVolteada || cartas[index].encontrada
+                                    ? Colors.white
+                                    : Colors.brown[300], // Un marrón un poco más claro
+                                borderRadius: BorderRadius.circular(12), // Bordes más redondos
+                                border: Border.all(
+                                  color: Colors.brown[900]!, 
+                                  width: 2
+                                ),
+                                // NUEVO: Sombra para dar efecto 3D
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withValues(alpha: 0.3),
+                                    blurRadius: 4,
+                                    offset: const Offset(2, 2),
+                                  ),
+                                ],
+                              ),
+                              child: Center(
+                                child: Text(
+                                  cartas[index].estaVolteada || cartas[index].encontrada
+                                      ? cartas[index].contenido
+                                      : '',
+                                  style: const TextStyle(fontSize: 34), // Emoji más grande
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
