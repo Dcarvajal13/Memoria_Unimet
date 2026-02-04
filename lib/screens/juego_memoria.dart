@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/carta_model.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class JuegoMemoria extends StatefulWidget {
   const JuegoMemoria({super.key});
@@ -17,12 +18,32 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
   List<int> cartasVolteadasIndex = []; 
   bool bloqueado = false; 
   int intentos = 0;
+  int mejorRecord = 0;
 
   @override
   void initState() {
     super.initState();
     _inicializarJuego();
+    _inicializarJuego();
   }
+
+  Future<void> _cargarRecord() async {
+    final prefs = await SharedPreferences.getInstance();
+    setState(() {
+      mejorRecord = prefs.getInt('record') ?? 0;
+    });
+  }
+
+  Future<void> _actualizarRecord() async {
+    final prefs = await SharedPreferences.getInstance();
+    if (mejorRecord == 0 || intentos < mejorRecord) {
+      await prefs.setInt('record', intentos);
+      setState(() {
+        mejorRecord = intentos;
+      });      
+    }
+  }
+
 
   void _inicializarJuego() {
     List<String> emojis = [
@@ -92,6 +113,8 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
   void _verificarVictoria() {
     bool ganaste = cartas.every((carta) => carta.encontrada);
     if (ganaste) {
+      _actualizarRecord();
+
       showDialog(
         context: context,
         builder: (context) => AlertDialog(
@@ -162,23 +185,16 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
                 child: Column( // <--- NUEVO: Column para poner texto arriba y cartas abajo
                   mainAxisSize: MainAxisSize.min, // Para que se ajuste al contenido
                   children: [
-                    // --- MARCADOR DE INTENTOS ---
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: Colors.brown[900], 
-                        borderRadius: BorderRadius.circular(20),
-                      ),
-                      child: Text(
-                        'Intentos: $intentos',
-                        style: const TextStyle(
-                          fontSize: 24, 
-                          fontWeight: FontWeight.bold,
-                          color: Colors.white
-                        ),
-                      ),
+                    // --- MARCADOR DE INTENTOS Y RECORD 
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        _infoTag('Intentos: $intentos'),
+                        const SizedBox(width: 20),
+                        _infoTag('Record: $mejorRecord'),
+                      ],
                     ),
-                    
+
                     const SizedBox(height: 20), // Espacio entre texto y cartas
 
                     // --- GRILLA DE CARTAS ---
@@ -233,6 +249,24 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _infoTag(String texto) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+      decoration: BoxDecoration(
+        color: Colors.white.withValues(alpha: 0.8),
+        borderRadius: BorderRadius.circular(20),
+      ),
+      child: Text(
+        texto,
+        style: const TextStyle(
+          fontSize: 20,
+          fontWeight: FontWeight.bold,
+          color: Colors.black87
+        ),
       ),
     );
   }
