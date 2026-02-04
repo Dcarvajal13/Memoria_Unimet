@@ -166,7 +166,7 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.8), // Fondo semitransparente
+                        color: Colors.brown[900], 
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Text(
@@ -174,7 +174,7 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
                         style: const TextStyle(
                           fontSize: 24, 
                           fontWeight: FontWeight.bold,
-                          color: Colors.black87
+                          color: Colors.white
                         ),
                       ),
                     ),
@@ -185,8 +185,8 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
                     Flexible( // Flexible es necesario dentro de Column
                       child: GridView.builder(
                         shrinkWrap: true,
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 6,
+                        gridDelegate:  SliverGridDelegateWithFixedCrossAxisCount(
+                          crossAxisCount: MediaQuery.of(context).size.width > 600 ? 6 : 4,
                           crossAxisSpacing: 15,
                           mainAxisSpacing: 15,
                           childAspectRatio: 1.0,
