@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import '../models/carta_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'package:audioplayers/audioplayers.dart';
 
 class JuegoMemoria extends StatefulWidget {
   const JuegoMemoria({super.key});
@@ -13,6 +14,7 @@ class JuegoMemoria extends StatefulWidget {
 class _JuegoMemoriaState extends State<JuegoMemoria> {
   // 1. Baraja de cartas
   List<Carta> cartas = [];
+  final player = AudioPlayer();
   
   // 2. Variables de control
   List<int> cartasVolteadasIndex = []; 
@@ -84,6 +86,7 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
     if (bloqueado || cartas[index].estaVolteada || cartas[index].encontrada) {
       return;
     }
+    player.play(AssetSource('sounds/flip.mp3'));
 
     setState(() {
       cartas[index].estaVolteada = true;
