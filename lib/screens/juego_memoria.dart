@@ -23,12 +23,22 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
   @override
   void initState() {
     super.initState();
+    _cargarRecord();
     _inicializarJuego();
-    _inicializarJuego();
+    
   }
 
   Future<void> _cargarRecord() async {
+    print("📢 INTENTANDO CARGAR RÉCORD...");
     final prefs = await SharedPreferences.getInstance();
+    int? recordGuardado = prefs.getInt('record');
+    print("📢 VALOR ENCONTRADO EN MEMORIA: $recordGuardado");
+    if (recordGuardado != null) {
+      setState(() {
+        mejorRecord = recordGuardado;
+      });
+    }
+
     setState(() {
       mejorRecord = prefs.getInt('record') ?? 0;
     });
@@ -37,10 +47,13 @@ class _JuegoMemoriaState extends State<JuegoMemoria> {
   Future<void> _actualizarRecord() async {
     final prefs = await SharedPreferences.getInstance();
     if (mejorRecord == 0 || intentos < mejorRecord) {
+      print("💾 ¡NUEVO RÉCORD! GUARDANDO EL NUMERO: $intentos");
       await prefs.setInt('record', intentos);
       setState(() {
         mejorRecord = intentos;
       });      
+    }else {
+      print("❌ No es récord. Hiciste $intentos y el récord es $mejorRecord");
     }
   }
 
